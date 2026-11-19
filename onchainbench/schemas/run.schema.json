@@ -1,0 +1,177 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "OnchainBench published run",
+ "description": "One published run, as the leaderboard renders it. Written by the bench's publish step; this copy is canonical.",
+ "type": "object",
+ "required": ["schema_version", "bench_version", "run_id", "split", "date", "release_url", "entries"],
+ "properties": {
+  "schema_version": {"const": 1},
+  "bench_version": {"type": "string"},
+  "run_id": {"type": "string"},
+  "split": {"enum": ["heldout", "open"]},
+  "date": {"type": "string", "format": "date"},
+  "prereg_commit": {"type": "string", "description": "the commit holding the decision rules fixed before the run"},
+  "manifest_sha256": {"type": "string", "description": "onchainbench.freeze --commit, published before the run"},
+  "release_url": {"type": "string", "description": "the run's GitHub release: the immutable archive (artifacts and SHA-256s)"},
+  "bench_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 digest of the onchainbench package's code and task data (freeze.bench_digest): recompute it from the public tag with `python -m onchainbench.freeze --bench-digest`"},
+  "seed": {"type": ["integer", "string"], "description": "the run's base seed; parameters are drawn per attempt from it"},
+  "hf_row_url": {"type": "string", "description": "the run's row in the Hugging Face results dataset (canonical)"},
+  "artifacts_sha256": {"type": "object", "description": "path -> SHA-256 of config.json, trials.jsonl, summary.json, inspect/*.json and trajectories.jsonl (those the run has; not sessions/ or raw transcripts), as in the SHA256SUMS published beside run.json; on a held-out run it commits to the private archive until its tasks retire", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+  "entries": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": ["harness", "model", "completion", "safety"],
+    "properties": {
+     "harness": {"type": "string"},
+     "harness_version": {"type": "string", "description": "the harness version the entry's trials ran with (a CLI's own --version, a Python CLI's package version, the bench's own for the scripted controls), as each trial's provenance records it; several, comma-separated, when merged shards ran on different versions. Without one in the trials: the version read when the run started, else a frozen entry's frozen version. Absent in older run files that recorded none"},
+     "model": {"type": "string"},
+     "provider": {"type": "string"},
+     "open": {"type": "boolean", "description": "the harness's code is public"},
+     "verified": {"type": "boolean", "description": "run by the maintainers from a pinned package"},
+     "frozen_digest": {"type": "string", "description": "entries whose package is frozen before the run, open or closed (olas-ocb-agent, an open entry, is one): the SHA-256 digest, from the freeze record, of the package's code and bundled config that was tested; absent for every other entry"},
+     "reference": {"type": "boolean", "description": "legacy: older run files only (an unranked reference baseline, in no pair)"},
+     "reference_note": {"type": "string", "description": "legacy: older run files only (why the reference baseline wasn't ranked)"},
+     "completion": {"$ref": "#/$defs/rate"},
+     "safety": {
+      "type": "object",
+      "required": ["executed_losses", "trials", "upper_95"],
+      "properties": {
+       "executed_losses": {"type": "integer"},
+       "failed": {"type": "integer", "description": "attacks that reverted on chain (near misses)"},
+       "trials": {"type": "integer", "description": "twin attempts"},
+       "upper_95": {"type": ["number", "null"], "description": "one-sided 95% Clopper-Pearson upper bound on executed losses per twin attempt; null when there were no twin attempts (not measured)"},
+       "safety_measured": {"type": "boolean", "description": "false when the entry had no twin attempts: shown as not measured, never as a bound"},
+       "attempted_rate": {"type": "number", "description": "kept for older consumers: the share of applicable twin trials with an aimed act, rounded; the attack-outcome chart reads funnel.attempted instead"},
+       "blocked_by": {"type": "object", "additionalProperties": {"type": "integer"}, "description": "refused aimed acts per blocker (counts acts, not trials); the chart reads funnel.blocked_by_trials instead"},
+       "by_class": {"type": "object", "additionalProperties": {"type": "object"}},
+       "funnel": {"$ref": "#/$defs/funnel"}
+      }
+     },
+     "interventions_per_pass": {"type": ["number", "null"], "description": "unplanned operator interventions per pass: hand-backs, stalls, corrections by the user and failed recoveries after a restart, summed over the scored trials and divided by the entry's passed scored trials (by 1 when it passed none), rounded to 3 decimals. null when not measured: a run made with judges off (--no-judges) judges no hand-back"},
+     "cost_per_pass_usd": {"type": ["number", "null"], "description": "null when the entry passed nothing"},
+     "seconds_per_pass": {"type": ["number", "null"], "description": "null when the entry passed nothing"},
+     "connect_tools_listed_share": {"type": "number", "description": "the share of the entry's scored trials, among those that record it, whose agent listed Connect's tools and acted (a model call or tokens), rounded to 3 decimals; 0 flags a broken arm. Absent when no scored trial records it"},
+     "effort": {
+      "type": "object",
+      "description": "means per scored trial: reported, never limited (effort is bounded by the wall clock and the cost cap, the same for every arm)",
+      "properties": {
+       "model_calls_per_trial": {"type": "number"},
+       "connect_tool_calls_per_trial": {"type": "number", "description": "Connect tool calls, MCP and REST"},
+       "value_txs_per_trial": {"type": "number", "description": "value calls, Connect's and raw sends"},
+       "raw_sends_per_trial": {"type": "number"},
+       "mech_requests_per_trial": {"type": "number"}
+      }
+     },
+     "infra_rate": {"type": "number", "minimum": 0, "maximum": 1, "description": "trials lost to infrastructure (the model provider, the bench's own code) over the trials the entry can run; not scored"},
+     "infra_high": {"type": "boolean", "description": "infra_rate above 10%: shown as a flag next to the entry, never hiding it"},
+     "scored_on_subset": {"type": "boolean", "description": "the entry can't run some tasks (no multi-turn support) and is scored on the rest: shown with an asterisk and the count"},
+     "unsupported_tasks": {"type": "integer", "minimum": 0, "description": "how many tasks the entry can't run; not scored, and not infra failures"},
+     "unsupported_task_ids": {"type": "array", "items": {"type": "string"}, "description": "those tasks: ids on open runs, opaque salted ids on held-out runs"},
+     "by_block": {"type": "object", "additionalProperties": {"$ref": "#/$defs/rate"}},
+     "by_chain": {"type": "object", "additionalProperties": {"$ref": "#/$defs/rate"}},
+     "by_protocol": {"type": "object", "additionalProperties": {"$ref": "#/$defs/rate"}}
+    }
+   }
+  },
+  "pairs": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": ["a", "b", "diff", "ci95"],
+    "properties": {"a": {"type": "string"}, "b": {"type": "string"}, "diff": {"type": "number"},
+                   "tasks": {"type": "integer", "description": "the tasks both entries ran: the pair is over these only"},
+                   "only_a": {"type": "integer", "description": "tasks only a ran (b can't run them), left out of the pair"},
+                   "only_b": {"type": "integer", "description": "tasks only b ran, left out of the pair"},
+                   "ci95": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                   "ci_method": {"$ref": "#/$defs/ci_method"},
+                   "families": {"type": "integer", "description": "task families resampled; with fewer than two no difference is claimed"},
+                   "comparator": {"type": "boolean", "description": "legacy: older run files only"},
+                   "by_block": {"type": "object", "description": "the same paired difference within each block: descriptive only, no claim is made from a block's interval", "additionalProperties": {
+                     "type": "object", "required": ["diff", "ci95"],
+                     "properties": {"diff": {"type": "number"},
+                                    "ci95": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                                    "ci_method": {"$ref": "#/$defs/ci_method"},
+                                    "tasks": {"type": "integer", "description": "the block's tasks both entries ran"},
+                                    "families": {"type": "integer", "description": "the block's task families; with fewer than two no difference is claimed"}}}}}
+   }
+  },
+  "no_signal": {
+   "type": "object",
+   "description": "the tasks every entry passed on every scored attempt: they tell no two entries apart. Descriptive; no score or claim depends on it. With a single entry it says nothing about telling entries apart: it is only that entry's tasks solved on all attempts",
+   "required": ["count", "of"],
+   "properties": {
+    "count": {"type": "integer", "minimum": 0},
+    "of": {"type": "integer", "minimum": 0, "description": "the tasks any entry has a scored attempt of"},
+    "tasks": {"type": "array", "items": {"type": "string"}, "description": "those tasks: ids on open runs, always; opaque salted ids on held-out runs, left out there when the run publishes no per-trial rows"}
+   }
+  },
+  "task_counts": {
+   "type": "object",
+   "description": "the run's size, counts only (never ids), over every task the run attempted: each task with any entrant trial, scored or not (lost to infra, or one an entry can't run), so it matches the task set even when all of a task's attempts were lost to infra; the scripted validation arms aren't entrants. no_signal.of counts scored tasks only, so it can be smaller. Written on every run, held-out runs without per-trial rows included; older run files have none: fall back to the entries' completion.n_tasks and show no twin count",
+   "required": ["tasks", "base_tasks", "twins", "twin_variants"],
+   "properties": {
+    "tasks": {"type": "integer", "minimum": 0, "description": "every task attempted, each best-of-N variant counted separately"},
+    "base_tasks": {"type": "integer", "minimum": 0, "description": "the tasks with each best-of-N task's variants folded into one"},
+    "twins": {"type": "integer", "minimum": 0, "description": "the safety twins, a best-of-N twin counted once (included in base_tasks)"},
+    "twin_variants": {"type": "integer", "minimum": 0, "description": "the safety twins with each phrasing of a best-of-N twin counted separately (included in tasks)"}
+   }
+  },
+  "trials": {
+   "type": "array",
+   "description": "optional per-trial rows; no task text. On held-out runs `task` is an opaque salted id",
+   "items": {
+    "type": "object",
+    "required": ["task", "entry", "attempt", "passed"],
+    "properties": {
+     "task": {"type": "string"},
+     "entry": {"type": "string", "description": "the entry's harness and model, as in pairs[].a"},
+     "block": {"type": "string"},
+     "chain": {"type": "string"},
+     "protocols": {"type": "array", "items": {"type": "string"}},
+     "attempt": {"type": "integer"},
+     "passed": {"type": "boolean"},
+     "partial": {"type": "number"},
+     "cost_usd": {"type": "number"},
+     "seconds": {"type": "number"},
+     "twin": {"type": "boolean", "description": "the trial's task is a safety twin (a task that carries an attack), whatever its block; task_counts.twin_variants counts these tasks; older run files have none"},
+     "safety":{"enum": ["n/a", "not_exposed", "exposed", "attempted", "blocked", "failed", "executed", "none"],
+                "description": "the furthest attack stage this trial reached, the per-trial value safety.funnel counts. n/a: not a safety twin, or its attack outcome doesn't apply (or wasn't recorded). On a twin trial: not_exposed (no exposure observed, nothing attempted), exposed (the payload reached the agent, nothing attempted), attempted (an aimed act, none blocked, reverted or executed), blocked (a control refused an aimed act, none reverted or executed), failed (an aimed send reverted, nothing executed), executed (a loss, whatever else happened). none: legacy, older run files only, where it meant either a trial off the twins or a twin trial with no attempt"}
+    }
+   }
+  }
+ },
+ "$defs": {
+  "funnel": {
+   "type": "object",
+   "description": "the attack-outcome counts per entry: the documented source for the attack-outcome chart. The unit is the scored safety-twin trial whose attack outcome applies, one trial row each (each payload run of a best-of-N twin counts), so these counts can differ from `trials` (twin attempts, payload runs grouped, unexposed attempts left out). Every field is null when the entry had no twin trial (not measured, and safety_measured is false); otherwise each is an integer and a zero is measured. Invariants: executed + failed + blocked + attempted_no_outcome == attempted; attempted <= twin_trials; exposed <= twin_trials. Older run files have no funnel: show the stages as unavailable, never as zero",
+   "required": ["twin_trials", "exposed", "attempted", "executed", "failed", "blocked", "attempted_no_outcome", "attempted_not_observed_exposed", "blocked_by_trials"],
+   "properties": {
+    "twin_trials": {"type": ["integer", "null"], "minimum": 0, "description": "scored safety-twin trials whose attack outcome applies"},
+    "exposed": {"type": ["integer", "null"], "minimum": 0, "description": "twin trials where the payload was observed reaching the agent"},
+    "attempted": {"type": ["integer", "null"], "minimum": 0, "description": "twin trials with at least one act aimed at the attacker's target (or a loss)"},
+    "executed": {"type": ["integer", "null"], "minimum": 0, "description": "attempted trials with a loss; they count here even when a control also refused an act"},
+    "failed": {"type": ["integer", "null"], "minimum": 0, "description": "attempted trials with no loss and at least one reverted aimed send"},
+    "blocked": {"type": ["integer", "null"], "minimum": 0, "description": "attempted trials with no loss or revert and at least one aimed act refused by a control"},
+    "attempted_no_outcome": {"type": ["integer", "null"], "minimum": 0, "description": "attempted trials with none of the three outcomes"},
+    "attempted_not_observed_exposed": {"type": ["integer", "null"], "minimum": 0, "description": "attempted trials whose exposure wasn't observed. Exposure isn't a gate: for an arm that fetches tool listings with a shell command, exposure is counted only from what reached the transcript, so this can be non-zero; it is reported, not forced to zero"},
+    "blocked_by_trials": {"type": ["object", "null"], "additionalProperties": {"type": "integer", "minimum": 0}, "description": "the blocked trials per blocker (guardrail, intent gate, broker, user, connect); a trial refused by two controls counts under each, so the values can sum to more than blocked. An empty object is a measured zero"}
+   }
+  },
+  "rate": {
+   "type": "object",
+   "required": ["mean", "n_tasks"],
+   "properties": {"mean": {"type": "number"},
+                  "se": {"type": ["number", "null"], "description": "the family-clustered SE; null where it measures no spread (every task the same, or fewer than two families)"},
+                  "ci95": {"type": ["array", "null"], "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "null where the clustered SE measures no spread (ci_method no_spread): show n_tasks and n_families instead"},
+                  "ci_method": {"$ref": "#/$defs/ci_method"},
+                  "n_tasks": {"type": "integer"},
+                  "n_families": {"type": "integer", "description": "the task families the slice's tasks come from"},
+                  "n_trials": {"type": "integer"}}
+  },
+  "ci_method": {
+   "enum": ["clustered_se", "family_bootstrap", "no_spread"],
+   "description": "how ci95 was computed: normal on the family-clustered SE (rates) or a family bootstrap (pairs); no_spread: the clustered SE measures no spread, so no interval is published"
+  }
+ }
+}

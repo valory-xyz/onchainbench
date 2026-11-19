@@ -1,0 +1,35 @@
+name: Harness / verified run request
+description: Add a harness's CLI as an arm, or ask for a verified held-out run (CONTRIBUTING.md, "Harnesses")
+labels: ["harness"]
+body:
+  - type: markdown
+    attributes: {value: "A harness or entry submitted for OnchainBench to run is covered by the [OnchainBench Terms](https://onchainbench.ai/terms) (Section 4)."}
+  - type: input
+    id: harness
+    attributes: {label: Harness and arm kind, description: "e.g. my-harness (the arm kind on the runner's --arms)"}
+    validations: {required: true}
+  - type: textarea
+    id: cli
+    attributes: {label: Headless command line, description: "How one turn runs, how a session resumes, and what it prints (CONTRIBUTING.md, \"The CLI contract\")"}
+    validations: {required: true}
+  - type: input
+    id: pin
+    attributes: {label: Pinned install, description: "A published package version or a commit"}
+    validations: {required: true}
+  - type: input
+    id: models
+    attributes: {label: Models, description: "The model(s) to run it with, and the provider"}
+    validations: {required: true}
+  - type: input
+    id: licence
+    attributes: {label: Licence, description: "The harness's open-source licence (closed-source harnesses are not yet accepted: CONTRIBUTING.md, \"Harnesses\")"}
+    validations: {required: true}
+  - type: textarea
+    id: smoke
+    attributes: {label: Open smoke run, description: "Your open-track results (run id, summary.json, or a link), with connect_tools_listed_share"}
+  - type: textarea
+    id: tuning
+    attributes: {label: Tuning, description: "Was it tuned on the open track? How?"}
+  - type: dropdown
+    id: pay
+    attributes: {label: Model spend beyond Valory's covered runs, options: ["Not needed", "We bring a key", "We pay"]}

@@ -1,0 +1,35 @@
+name: Task proposal
+description: Propose open-track tasks for a protocol (CONTRIBUTING.md, "Tasks")
+labels: ["task proposal"]
+body:
+  - type: markdown
+    attributes: {value: "Tasks and code contributed to this repository are under its licence ([Apache-2.0](../blob/main/LICENSE)); see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md). Ideas in an issue are Suggestions, as the [OnchainBench Terms](https://onchainbench.ai/terms) (Section 4) explain."}
+  - type: input
+    id: protocol
+    attributes: {label: Protocol, description: "The protocol, and the chain(s) it runs on (Ethereum, Gnosis, Polygon, Arbitrum, Optimism, Base, Celo, Mode or Robinhood)"}
+    validations: {required: true}
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: ["A. DeFi actions", "B. Prediction markets", "C. Research", "D. Long-horizon operations", "E. Talking with the user", "F. Safety (an attack twin)", "G. Long-tail contracts"]
+    validations: {required: true}
+  - type: textarea
+    id: task
+    attributes: {label: The task, description: "What an operator would ask an agent to do, in their words, and which parameters vary per attempt"}
+    validations: {required: true}
+  - type: textarea
+    id: check
+    attributes: {label: The check, description: "What on-chain state or file proves it was done right, and what a careful agent might do differently that must still pass"}
+    validations: {required: true}
+  - type: textarea
+    id: coverage
+    attributes: {label: What it adds, description: "What the suite doesn't test yet that this would"}
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: It needs no private API or key, and works on a pinned fork block
+        - label: It tests agent behaviour, not a protocol's marketing claims
+        - label: An attack twin demonstrates no real, unfixed vulnerability (those go to the protocol privately)

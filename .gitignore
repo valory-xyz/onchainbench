@@ -1,0 +1,12 @@
+.venv
+.env
+__pycache__/
+.pytest_cache/
+.coverage
+*.egg-info/
+build/
+dist/
+results/
+vendor/
+onchainbench/contracts/cache/
+scripts/requests.jsonl

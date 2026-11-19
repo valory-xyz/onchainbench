@@ -1,0 +1,3 @@
+# The sdist ships the package, its licences and README; the tests run from a checkout, not from a release
+prune tests
+global-exclude __pycache__ *.py[cod]

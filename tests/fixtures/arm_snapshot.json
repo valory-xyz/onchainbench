@@ -1,0 +1,534 @@
+{
+ "claude-code": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/claude",
+     "-p",
+     "do the task",
+     "--output-format",
+     "stream-json",
+     "--verbose",
+     "--mcp-config",
+     "<tmp>/ws/.mcp.json",
+     "--strict-mcp-config",
+     "--permission-mode",
+     "acceptEdits",
+     "--allowedTools",
+     "Bash",
+     "Read",
+     "Write",
+     "Edit",
+     "Glob",
+     "Grep",
+     "WebFetch",
+     "WebSearch",
+     "mcp__pearl-connect",
+     "--max-turns",
+     "500"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "ANTHROPIC_API_KEY": "<secret>",
+     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   }
+  ],
+  "cap": "between turns",
+  "files": {},
+  "named_secrets": [
+   "the Anthropic key"
+  ],
+  "step_limit": "--max-turns 500, per turn"
+ },
+ "claude-code:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/claude",
+     "-p",
+     "do the task",
+     "--output-format",
+     "stream-json",
+     "--verbose",
+     "--mcp-config",
+     "<tmp>/ws/.mcp.json",
+     "--strict-mcp-config",
+     "--permission-mode",
+     "acceptEdits",
+     "--allowedTools",
+     "Bash",
+     "Read",
+     "Write",
+     "Edit",
+     "Glob",
+     "Grep",
+     "WebFetch",
+     "WebSearch",
+     "mcp__pearl-connect",
+     "--max-turns",
+     "500",
+     "--model",
+     "vendor/m"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "ANTHROPIC_API_KEY": "",
+     "ANTHROPIC_AUTH_TOKEN": "<secret>",
+     "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   }
+  ],
+  "cap": "between turns",
+  "files": {},
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "--max-turns 500, per turn"
+ },
+ "codex:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/codex",
+     "exec",
+     "--json",
+     "--skip-git-repo-check",
+     "-C",
+     "<tmp>/ws",
+     "do the task"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "CODEX_HOME": "<tmp>/codex-home",
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENROUTER_API_KEY": "<secret>",
+     "PATH": "/usr/bin:/bin",
+     "PEARL_CONNECT_TOKEN": "<secret>",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   }
+  ],
+  "cap": "between turns",
+  "files": {
+   "codex-home/config.toml": "model = \"vendor/m\"\nmodel_provider = \"openrouter\"\napproval_policy = \"never\"\ncheck_for_update_on_startup = false\nsandbox_mode = \"workspace-write\"\n\n[sandbox_workspace_write]\nnetwork_access = true\nexclude_slash_tmp = true\n\n[model_providers.openrouter]\nname = \"OpenRouter\"\nbase_url = \"https://openrouter.ai/api/v1\"\nenv_key = \"OPENROUTER_API_KEY\"\n\n[mcp_servers.pearl-connect]\nurl = \"http://127.0.0.1:7000/mcp/\"\nbearer_token_env_var = \"PEARL_CONNECT_TOKEN\"\ndefault_tools_approval_mode = \"approve\"\n\n[analytics]\nenabled = false\n\n[feedback]\nenabled = false\n\n[features]\nplugins = false\nremote_plugin = false\nplugin_discovery_prefetch = false\nplugin_sharing = false\napps = false\nin_app_updates = false\n\n[otel]\nexporter = \"none\"\nmetrics_exporter = \"none\"\ntrace_exporter = \"none\"\n\n[shell_environment_policy]\ninherit = \"all\"\nignore_default_excludes = false\n"
+  },
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "none: codex exec has no turn or step limit"
+ },
+ "hermes-raw:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/hermes",
+     "chat",
+     "--oneshot",
+     "-Q",
+     "--format",
+     "stream-json",
+     "--max-turns",
+     "500",
+     "--yolo",
+     "-q",
+     "do the task"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HERMES_GATEWAY_LOCK_DIR": "<tmp>/hermes-home/gateway-locks",
+     "HERMES_HOME": "<tmp>/hermes-home",
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENROUTER_API_KEY": "<secret>",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   },
+   {
+    "argv": [
+     "ps",
+     "axeww",
+     "-o",
+     "pid=,command="
+    ],
+    "via": "Popen"
+   }
+  ],
+  "cap": "between turns",
+  "files": {
+   "hermes-home/config.yaml": "agent:\n  disabled_toolsets:\n  - cronjob\n  run_budget_seconds: 840\napprovals:\n  mode: 'off'\nmcp_servers:\n  evm:\n    args:\n    - /opt/evm-mcp/index.js\n    command: node\n    env:\n      EVM_PRIVATE_KEY: 0xk\n      EVM_RPC_STRICT: '1'\n      EVM_RPC_URL: http://127.0.0.1:8545\n      EVM_RPC_URL_100: http://127.0.0.1:8545\nmodel:\n  default: vendor/m\n  provider: openrouter\nmodel_catalog:\n  enabled: false\nmodels_dev:\n  url: http://127.0.0.1:9/\n"
+  },
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "--max-turns 500, per turn"
+ },
+ "hermes:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/hermes",
+     "chat",
+     "--oneshot",
+     "-Q",
+     "--format",
+     "stream-json",
+     "--max-turns",
+     "500",
+     "--yolo",
+     "-q",
+     "do the task"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HERMES_GATEWAY_LOCK_DIR": "<tmp>/hermes-home/gateway-locks",
+     "HERMES_HOME": "<tmp>/hermes-home",
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENROUTER_API_KEY": "<secret>",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   },
+   {
+    "argv": [
+     "ps",
+     "axeww",
+     "-o",
+     "pid=,command="
+    ],
+    "via": "Popen"
+   }
+  ],
+  "cap": "between turns",
+  "files": {
+   "hermes-home/config.yaml": "agent:\n  disabled_toolsets:\n  - cronjob\n  run_budget_seconds: 840\napprovals:\n  mode: 'off'\nmcp_servers:\n  pearl-connect:\n    headers:\n      Authorization: Bearer <secret>\n    url: http://127.0.0.1:7000/mcp/\nmodel:\n  default: vendor/m\n  provider: openrouter\nmodel_catalog:\n  enabled: false\nmodels_dev:\n  url: http://127.0.0.1:9/\n"
+  },
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "--max-turns 500, per turn"
+ },
+ "olas-ocb-agent-mech:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/ocb-agent",
+     "--dir",
+     "<tmp>/ws",
+     "--model",
+     "mech:chat@0x77000000000000000000000000000000000000b3",
+     "--approval",
+     "auto",
+     "--sandbox",
+     "auto",
+     "--step-limit",
+     "500",
+     "--cost-limit",
+     "2.0",
+     "--max-native-usd",
+     "inf",
+     "--max-mech-usd",
+     "inf",
+     "--max-value-calls",
+     "none",
+     "--allow-sign-message",
+     "--model-budget",
+     "1.0",
+     "--turn-seconds",
+     "840",
+     "--sessions-dir",
+     "<tmp>/ocb-agent/sessions",
+     "--agent-subdir",
+     "agent",
+     "--trusted-skill-hash",
+     "102ca56c3016413d112edbdaa321597e0937740a60b03262d4f70f92c67e1268",
+     "--shell-env",
+     "HTTPS_PROXY=http://127.0.0.1:3128",
+     "--shell-env",
+     "HTTP_PROXY=http://127.0.0.1:3128",
+     "--output",
+     "json",
+     "-p",
+     "do the task"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HOME": "/home/runner",
+     "LITELLM_MODE": "PRODUCTION",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp",
+     "XDG_STATE_HOME": "<tmp>/ocb-agent/state"
+    },
+    "timeout": 900,
+    "via": "run"
+   }
+  ],
+  "cap": "in the turn",
+  "files": {},
+  "named_secrets": [],
+  "step_limit": "--step-limit 500, per turn"
+ },
+ "olas-ocb-agent:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/ocb-agent",
+     "--dir",
+     "<tmp>/ws",
+     "--model",
+     "litellm:openrouter/vendor/m",
+     "--approval",
+     "auto",
+     "--sandbox",
+     "auto",
+     "--step-limit",
+     "500",
+     "--cost-limit",
+     "2.0",
+     "--max-native-usd",
+     "inf",
+     "--max-mech-usd",
+     "inf",
+     "--max-value-calls",
+     "none",
+     "--allow-sign-message",
+     "--model-budget",
+     "1.0",
+     "--turn-seconds",
+     "840",
+     "--sessions-dir",
+     "<tmp>/ocb-agent/sessions",
+     "--agent-subdir",
+     "agent",
+     "--trusted-skill-hash",
+     "102ca56c3016413d112edbdaa321597e0937740a60b03262d4f70f92c67e1268",
+     "--shell-env",
+     "HTTPS_PROXY=http://127.0.0.1:3128",
+     "--shell-env",
+     "HTTP_PROXY=http://127.0.0.1:3128",
+     "--model-price",
+     "{\"input_cost_per_token\": 1e-07, \"output_cost_per_token\": 2e-07, \"cache_read_input_token_cost\": 5e-08, \"cache_creation_input_token_cost\": 1e-07, \"litellm_provider\": \"openrouter\"}",
+     "--output",
+     "json",
+     "-p",
+     "do the task"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HOME": "/home/runner",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENROUTER_API_KEY": "<secret>",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp",
+     "XDG_STATE_HOME": "<tmp>/ocb-agent/state"
+    },
+    "timeout": 900,
+    "via": "run"
+   }
+  ],
+  "cap": "in the turn",
+  "files": {},
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "--step-limit 500, per turn"
+ },
+ "openclaw-raw:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/openclaw",
+     "agent",
+     "--local",
+     "--session-id",
+     "ocb-<uuid>",
+     "--message-file",
+     "<tmp>/openclaw-raw-state/message.md",
+     "--model",
+     "openrouter/vendor/m",
+     "--timeout",
+     "840",
+     "--json"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENCLAW_CONFIG_PATH": "<tmp>/openclaw-raw-state/run.json",
+     "OPENCLAW_HOME": "<tmp>/openclaw-raw-state/home",
+     "OPENCLAW_STATE_DIR": "<tmp>/openclaw-raw-state/state",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   },
+   {
+    "argv": [
+     "/opt/bin/openclaw",
+     "sessions",
+     "export-trajectory",
+     "--session-key",
+     "agent:main:explicit:ocb-<uuid>",
+     "--workspace",
+     "<tmp>/openclaw-raw-state/export",
+     "--output",
+     "turn-1",
+     "--json"
+    ],
+    "cwd": "<tmp>/openclaw-raw-state",
+    "env": {
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "ONCHAINBENCH_OPENCLAW_RAW_EXPORT": "1",
+     "OPENCLAW_CONFIG_PATH": "<tmp>/openclaw-raw-state/run.json",
+     "OPENCLAW_HOME": "<tmp>/openclaw-raw-state/home",
+     "OPENCLAW_STATE_DIR": "<tmp>/openclaw-raw-state/state",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 120,
+    "via": "run"
+   }
+  ],
+  "cap": "between turns",
+  "files": {
+   "openclaw-raw-state/message.md": "do the task",
+   "openclaw-raw-state/run.json": "{\"env\": {\"shellEnv\": {\"enabled\": false}}, \"agents\": {\"defaults\": {\"workspace\": \"<tmp>/ws\", \"skipBootstrap\": true, \"sandbox\": {\"mode\": \"off\"}, \"timeoutSeconds\": 840}}, \"mcp\": {\"servers\": {\"evm\": {\"command\": \"node\", \"args\": [\"/opt/evm-mcp/index.js\"], \"env\": {\"EVM_PRIVATE_KEY\": \"0xk\", \"EVM_RPC_URL_100\": \"http://127.0.0.1:8545\", \"EVM_RPC_URL\": \"http://127.0.0.1:8545\", \"EVM_RPC_STRICT\": \"1\"}}}}, \"tools\": {\"profile\": \"coding\", \"fs\": {\"workspaceOnly\": true}, \"exec\": {\"mode\": \"full\"}, \"loopDetection\": {\"enabled\": true}, \"deny\": [\"group:automation\", \"ask_user\", \"sessions_spawn\", \"subagents\", \"agents_wait\"]}, \"skills\": {\"load\": {\"watch\": false}}, \"models\": {\"providers\": {\"openrouter\": {\"apiKey\": \"<secret>\"}}}}"
+  },
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "none: openclaw agent has no turn limit (its turn timeout and loop detection apply)"
+ },
+ "openclaw:openrouter/vendor/m": {
+  "calls": [
+   {
+    "argv": [
+     "/opt/bin/openclaw",
+     "agent",
+     "--local",
+     "--session-id",
+     "ocb-<uuid>",
+     "--message-file",
+     "<tmp>/openclaw-state/message.md",
+     "--model",
+     "openrouter/vendor/m",
+     "--timeout",
+     "840",
+     "--json"
+    ],
+    "cwd": "<tmp>/ws",
+    "env": {
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "OPENCLAW_CONFIG_PATH": "<tmp>/openclaw-state/run.json",
+     "OPENCLAW_HOME": "<tmp>/openclaw-state/home",
+     "OPENCLAW_STATE_DIR": "<tmp>/openclaw-state/state",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 900,
+    "via": "run"
+   },
+   {
+    "argv": [
+     "/opt/bin/openclaw",
+     "sessions",
+     "export-trajectory",
+     "--session-key",
+     "agent:main:explicit:ocb-<uuid>",
+     "--workspace",
+     "<tmp>/openclaw-state/export",
+     "--output",
+     "turn-1",
+     "--json"
+    ],
+    "cwd": "<tmp>/openclaw-state",
+    "env": {
+     "HOME": "/home/runner",
+     "HTTPS_PROXY": "http://127.0.0.1:3128",
+     "HTTP_PROXY": "http://127.0.0.1:3128",
+     "LITELLM_MODE": "PRODUCTION",
+     "ONCHAINBENCH_OPENCLAW_RAW_EXPORT": "1",
+     "OPENCLAW_CONFIG_PATH": "<tmp>/openclaw-state/run.json",
+     "OPENCLAW_HOME": "<tmp>/openclaw-state/home",
+     "OPENCLAW_STATE_DIR": "<tmp>/openclaw-state/state",
+     "PATH": "/usr/bin:/bin",
+     "TEMP": "<tmp>/tmp",
+     "TMP": "<tmp>/tmp",
+     "TMPDIR": "<tmp>/tmp"
+    },
+    "timeout": 120,
+    "via": "run"
+   }
+  ],
+  "cap": "between turns",
+  "files": {
+   "openclaw-state/message.md": "do the task",
+   "openclaw-state/run.json": "{\"env\": {\"shellEnv\": {\"enabled\": false}}, \"agents\": {\"defaults\": {\"workspace\": \"<tmp>/ws\", \"skipBootstrap\": true, \"sandbox\": {\"mode\": \"off\"}, \"timeoutSeconds\": 840}}, \"mcp\": {\"servers\": {\"pearl-connect\": {\"url\": \"http://127.0.0.1:7100/mcp/\", \"transport\": \"streamable-http\", \"headers\": {\"Authorization\": \"Bearer <secret>\"}}}}, \"tools\": {\"profile\": \"coding\", \"fs\": {\"workspaceOnly\": true}, \"exec\": {\"mode\": \"full\"}, \"loopDetection\": {\"enabled\": true}, \"deny\": [\"group:automation\", \"ask_user\", \"sessions_spawn\", \"subagents\", \"agents_wait\"]}, \"skills\": {\"load\": {\"watch\": false}}, \"models\": {\"providers\": {\"openrouter\": {\"apiKey\": \"<secret>\"}}}}"
+  },
+  "named_secrets": [
+   "the OpenRouter key"
+  ],
+  "step_limit": "none: openclaw agent has no turn limit (its turn timeout and loop detection apply)"
+ }
+}

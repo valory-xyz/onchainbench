@@ -1,0 +1,28 @@
+name: Wallet adapter proposal
+description: Propose a self-custodial wallet stack in Connect's place (CONTRIBUTING.md, "Wallet adapters"). The hardest kind to get added.
+labels: ["wallet adapter"]
+body:
+  - type: markdown
+    attributes: {value: "An adapter contributed to this repository is under its licence ([Apache-2.0](../blob/main/LICENSE)); see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md). Ideas in an issue are Suggestions, as the [OnchainBench Terms](https://onchainbench.ai/terms) (Section 4) explain."}
+  - type: markdown
+    attributes:
+      value: "A wallet is added only if it can improve what the bench measures (for example a safety mechanism the bench doesn't measure yet). Please make that case below before writing code."
+  - type: input
+    id: wallet
+    attributes: {label: Wallet, description: "Name, repository, version to pin, licence"}
+    validations: {required: true}
+  - type: textarea
+    id: rationale
+    attributes: {label: What it would let the bench measure, description: "What it can show about safety or completion that Connect and evm-mcp-server can't, and who uses it"}
+    validations: {required: true}
+  - type: textarea
+    id: integration
+    attributes: {label: Integration, description: "How it runs locally, how it is pointed at a fork with no public-RPC fallback, what needs patching, and how it sends (eth_sendRawTransaction through the trial's RPC)"}
+    validations: {required: true}
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Requirements
+      options:
+        - label: Self-custodial and local, with no vendor service in the signing or policy path
+        - label: Open-source licence that lets the bench install and patch it

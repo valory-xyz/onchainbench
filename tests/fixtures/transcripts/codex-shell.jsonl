@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"01a1d60b-6d7c-79e3-babd-74dbef3e64ed"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `fake/model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc 'echo fake-tool-ran'","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc 'echo fake-tool-ran'","aggregated_output":"N/A: version \"N/A -> N/A\" is not yet installed.\n\nYou need to run \"nvm install N/A\" to install it before using it.\nfake-tool-ran\n","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"FAKE FINAL ANSWER: the tool printed fake-tool-ran."}}
+{"type":"turn.completed","usage":{"input_tokens":200,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":40,"reasoning_output_tokens":0}}

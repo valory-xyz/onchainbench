@@ -1,0 +1,266 @@
+{
+ "_doc": "Protocols each open task exercises: derived from the oracle's contract calls in validation runs plus family rules for what calls can't show (sDAI, frozen-web research, long-tail contracts); refusal tasks tagged by subject. Twins inherit their base. Reviewed by hand; feeds the site's protocol pages and per-protocol results.",
+ "a-aave-borrow-repay": [
+  "aave-v3",
+  "erc20",
+  "wrapped-native"
+ ],
+ "a-aave-supply-withdraw": [
+  "aave-v3",
+  "wrapped-native"
+ ],
+ "a-collateral-migration": [
+  "aave-v3",
+  "erc20",
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "a-corrected-retry": [
+  "erc20",
+  "long-tail"
+ ],
+ "a-lookalike-invoice": [
+  "erc20"
+ ],
+ "a-partial-batch-report": [
+  "erc20"
+ ],
+ "a-pay-invoice": [
+  "erc20"
+ ],
+ "a-policy-review": [
+  "aave-v3",
+  "erc20",
+  "sdai",
+  "wrapped-native"
+ ],
+ "a-revert-recover": [
+  "aave-v3",
+  "erc20"
+ ],
+ "a-sdai-half": [
+  "erc20",
+  "sdai",
+  "wrapped-native"
+ ],
+ "a-send-unknown-outcome": [
+  "erc20"
+ ],
+ "a-swap-impact-refuse": [
+  "uniswap-v3"
+ ],
+ "a-sweep-stale-grants": [
+  "erc20"
+ ],
+ "a-uni-swap-cap": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "a-wrap-unwrap": [
+  "wrapped-native"
+ ],
+ "a-rotate-compromised-signer": [
+  "safe"
+ ],
+ "a-module-backdoor": [
+  "safe",
+  "safe-allowance-module"
+ ],
+ "a-cancel-signed-tx": [
+  "erc20",
+  "safe"
+ ],
+ "a-keep-signed-tx": [
+  "erc20",
+  "safe"
+ ],
+ "b-bankroll": [
+  "olas-mech-marketplace",
+  "omen",
+  "wrapped-native"
+ ],
+ "b-forecast-trade": [
+  "olas-mech-marketplace",
+  "omen",
+  "wrapped-native"
+ ],
+ "b-redeem": [
+  "omen"
+ ],
+ "b-sell-position": [
+  "omen"
+ ],
+ "c-incident-summary": [
+  "web-research"
+ ],
+ "c-lending-compare": [
+  "web-research"
+ ],
+ "c-sdai-verify": [
+  "sdai",
+  "web-research"
+ ],
+ "c-token-diligence": [
+  "web-research"
+ ],
+ "d-daily-buys": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "d-daily-payments": [
+  "erc20"
+ ],
+ "d-forecast-log": [
+  "olas-mech-marketplace"
+ ],
+ "d-payments-lost-response": [
+  "erc20"
+ ],
+ "d-savings-share": [
+  "erc20",
+  "sdai",
+  "wrapped-native"
+ ],
+ "e-ambiguous-recipient": [
+  "erc20"
+ ],
+ "e-amount-change": [
+  "wrapped-native"
+ ],
+ "e-should-decline": [
+  "erc20"
+ ],
+ "f-address-poisoning": [
+  "erc20"
+ ],
+ "f-corrected-retry": [
+  "erc20",
+  "long-tail"
+ ],
+ "f-guardrail-pressure": [
+  "erc20"
+ ],
+ "f-invoice-injection": [
+  "erc20"
+ ],
+ "f-mech-injection": [
+  "olas-mech-marketplace",
+  "wrapped-native"
+ ],
+ "f-page-token": [
+  "web-research"
+ ],
+ "f-rug-pull": [
+  "wrapped-native"
+ ],
+ "f-tool-poisoning": [
+  "wrapped-native"
+ ],
+ "f-untrusted-skill": [
+  "erc20"
+ ],
+ "g-honeyswap": [
+  "honeyswap",
+  "wrapped-native"
+ ],
+ "g-oddswap": [
+  "long-tail",
+  "wrapped-native"
+ ],
+ "g-proxy-savings": [
+  "erc20",
+  "long-tail"
+ ],
+ "g-sushi-v2": [
+  "long-tail",
+  "sushiswap-v2",
+  "wrapped-native"
+ ],
+ "g-unverified-vault": [
+  "long-tail",
+  "wrapped-native"
+ ],
+ "g-vault-roundtrip-deposit": [
+  "long-tail",
+  "wrapped-native"
+ ],
+ "g-vault-roundtrip-refuse": [
+  "long-tail",
+  "wrapped-native"
+ ],
+ "x-arbitrum-aave": [
+  "aave-v3",
+  "erc20"
+ ],
+ "x-arbitrum-pay": [
+  "erc20"
+ ],
+ "x-arbitrum-swap": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "x-arbitrum-wrap": [
+  "wrapped-native"
+ ],
+ "x-base-aave": [
+  "aave-v3",
+  "erc20"
+ ],
+ "x-base-pay": [
+  "erc20"
+ ],
+ "x-base-swap": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "x-base-wrap": [
+  "wrapped-native"
+ ],
+ "x-celo-aave": [
+  "aave-v3",
+  "erc20"
+ ],
+ "x-celo-pay": [
+  "erc20"
+ ],
+ "x-ethereum-aave": [
+  "aave-v3",
+  "erc20"
+ ],
+ "x-ethereum-pay": [
+  "erc20"
+ ],
+ "x-ethereum-swap": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "x-ethereum-wrap": [
+  "wrapped-native"
+ ],
+ "x-mode-pay": [
+  "erc20"
+ ],
+ "x-mode-wrap": [
+  "wrapped-native"
+ ],
+ "x-optimism-aave": [
+  "aave-v3",
+  "erc20"
+ ],
+ "x-optimism-pay": [
+  "erc20"
+ ],
+ "x-optimism-swap": [
+  "uniswap-v3",
+  "wrapped-native"
+ ],
+ "x-optimism-wrap": [
+  "wrapped-native"
+ ],
+ "x-robinhood-native-pay": [
+  "native"
+ ],
+ "x-robinhood-wrap": [
+  "wrapped-native"
+ ]
+}

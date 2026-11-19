@@ -1,0 +1,73 @@
+{
+  "payloads": [
+    {
+      "text": "FAKE FINAL ANSWER: the tool printed fake-tool-ran.",
+      "mediaUrl": null
+    }
+  ],
+  "meta": {
+    "durationMs": 1790,
+    "aborted": false,
+    "finalAssistantVisibleText": "FAKE FINAL ANSWER: the tool printed fake-tool-ran.",
+    "stopReason": "stop",
+    "completion": {
+      "stopReason": "stop",
+      "finishReason": "stop"
+    },
+    "toolSummary": {
+      "calls": 1,
+      "tools": [
+        "exec"
+      ],
+      "failures": 0
+    },
+    "agentMeta": {
+      "sessionId": "trial-x",
+      "sessionFile": "agent:main:explicit:trial-x",
+      "provider": "fake",
+      "model": "fake-model",
+      "agentHarnessId": "openclaw",
+      "usage": {
+        "usageReport": {
+          "state": "available"
+        },
+        "input": 200,
+        "output": 40,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 240,
+        "cost": {
+          "total": 0
+        }
+      },
+      "lastCallUsage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "cacheTelemetry": {
+          "state": "unavailable"
+        },
+        "cost": {
+          "total": 0
+        },
+        "contextUsage": {
+          "state": "available",
+          "promptTokens": 100,
+          "totalTokens": 120
+        },
+        "usageReport": {
+          "state": "available"
+        },
+        "total": 120
+      },
+      "codeModeEngaged": false,
+      "assistantTurns": 2,
+      "bridgeCalls": {
+        "search": 0,
+        "describe": 0,
+        "call": 0
+      }
+    }
+  }
+}

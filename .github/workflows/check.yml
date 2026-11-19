@@ -1,0 +1,125 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:  # one run per PR (a new push cancels the old run); main is checked after each merge
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf  # v1; Anvil: the fork tests
+        # pinned: the forks' behaviour is the build's (runs record it and never combine two); its cache is one per
+        # job and commit, ours (below) is this job's own
+        with: {version: v1.9.0, cache: false}
+      - name: the forks' state from earlier runs (pinned blocks, so it never goes stale)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6
+        with:
+          path: ~/.foundry/cache/rpc
+          key: anvil-rpc-check-${{ hashFiles('onchainbench/forks.py') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            anvil-rpc-check-${{ hashFiles('onchainbench/forks.py') }}-
+            anvil-rpc-check-
+      - run: sudo apt-get update && sudo apt-get install -y bubblewrap  # the Linux sandbox tests
+      - run: uv venv .venv -p 3.12 && VIRTUAL_ENV=.venv uv pip install -e ".[dev]"
+      - name: the committed contract build (what runs deploy) is what the sources compile to
+        run: .venv/bin/python scripts/check_contracts.py
+      - name: uv.lock matches pyproject.toml
+        run: uv lock --check
+      - run: scripts/check.sh --tests-only  # held-out tests skip here: the held-out set isn't public
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7; gated with validate-open's in the coverage job
+        with: {name: coverage-tests, path: .coverage, include-hidden-files: true, retention-days: 1}
+  check-os:  # the same lint and tests on macOS and Windows, less the fork tests (platform-independent, run on Linux);
+    # no coverage gate here: a run without the fork tests can't reach 100%, and the coverage job gates Linux's
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf  # v1; Anvil: the fork tests
+        with: {version: v1.9.0}  # the same pinned build as on Linux
+      - run: uv venv .venv -p 3.12 && VIRTUAL_ENV=.venv uv pip install -e ".[dev]"
+      - name: lint and tests (no fork tests, no coverage gate off Linux)
+        run: |
+          PY=.venv/bin/python; [ -x "$PY" ] || PY=.venv/Scripts/python.exe
+          "$PY" -m ruff check .
+          "$PY" -m ruff format --check .
+          "$PY" -m pytest -q -p no:cacheprovider -n 4 --dist loadgroup --no-cov -rs -m "not fork" --durations=30
+  validate-open:  # in two shards by block, about equal in trial time; together they cover every open block
+    # (tests/test_split_prep.py checks the two lists below partition the open set's blocks)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {shard: 0, blocks: "A,C,E,F"}  # trial time varies run to run (cold fork fetches): this split held on two
+          - {shard: 1, blocks: "B,D,G"}  # measured runs (about 940 s vs 1,030 s, and 1,030 s vs 920 s)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf  # v1
+        with: {version: v1.9.0, cache: false}  # pinned (above); its cache is one per job and commit, so both shards
+        # raced for it and one always
+        # started cold (its blocks' state fetched from public RPCs every run); each shard keeps its own
+      - name: this shard's forks' state from earlier runs (pinned blocks, so it never goes stale)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6
+        with:
+          path: ~/.foundry/cache/rpc
+          key: anvil-rpc-open-${{ matrix.shard }}-${{ hashFiles('onchainbench/forks.py') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            anvil-rpc-open-${{ matrix.shard }}-${{ hashFiles('onchainbench/forks.py') }}-
+            anvil-rpc-open-${{ matrix.shard }}-
+      - run: uv venv .venv -p 3.12 && VIRTUAL_ENV=.venv uv pip install -e ".[dev]"
+      - name: oracle passes, null and cheater fail, on every open task of blocks ${{ matrix.blocks }} (no model, free)
+        run: |
+          .venv/bin/coverage run -m onchainbench.run --arms oracle,null,cheater --split open \
+            --blocks "${{ matrix.blocks }}" --workers 4 --run ci-open
+          .venv/bin/python scripts/validate_run.py results/ci-open/trials.jsonl --split open --blocks "${{ matrix.blocks }}"
+      - name: the same on the held-out split, through the tests' one-task stand-in (held-out CI runs the real set)
+        if: matrix.shard == 0
+        env: {ONCHAINBENCH_HELDOUT: "${{ github.workspace }}/tests/fixtures/heldout/onchainbench_heldout"}
+        run: |
+          .venv/bin/coverage run --append -m onchainbench.run --arms oracle,null,cheater --split test --run ci-test
+          .venv/bin/python scripts/validate_run.py results/ci-test/trials.jsonl --split test
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7; gated with the tests' coverage in the coverage job
+        with: {name: "coverage-open-${{ matrix.shard }}", path: .coverage, include-hidden-files: true, retention-days: 1}
+  coverage:  # 100% line coverage of the package over the tests (check) and the open validation run combined
+    needs: [check, validate-open]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7; the same path as the two jobs': their recorded file paths match
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - run: uv venv .venv -p 3.12 && VIRTUAL_ENV=.venv uv pip install coverage
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with: {name: coverage-tests, path: cov-tests}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with: {name: coverage-open-0, path: cov-open-0}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with: {name: coverage-open-1, path: cov-open-1}
+      - run: |
+          .venv/bin/coverage combine cov-tests/.coverage cov-open-0/.coverage cov-open-1/.coverage
+          .venv/bin/coverage report
+  all-checks-passed:  # the single required status check (Valory's repo policy)
+    name: All checks passed
+    if: always()
+    needs: [check, check-os, validate-open, coverage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
+      - run: echo "All required checks passed."

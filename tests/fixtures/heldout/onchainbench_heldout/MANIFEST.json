@@ -1,0 +1,19 @@
+{
+ "fingerprint": 2,
+ "files": {
+  "PROTOCOLS.json": "0e24fd52650fd5c914790ffb839a8d3a7422038621b3e580725af476a1c12129",
+  "PUBLIC-ID-SALT": "9f211747ff4fea26e43bfc304ca8d0685ae3cb656ad6c559ec255f1cc26dd267",
+  "__init__.py": "018688d6a0fc69477b6177622231d2f80d5a996b7ae0f1d9f125913dd12bc654",
+  "fixture_tasks.py": "b59d519eb623bbb99e41949a9612cfe6afa2a4c2b5aad7ed1e7a5ec4cf4134b2"
+ },
+ "history": [
+  {
+   "reason": "fingerprint version 2: covers every file the task loader reads",
+   "added": [
+    "PROTOCOLS.json",
+    "PUBLIC-ID-SALT",
+    "__init__.py"
+   ]
+  }
+ ]
+}

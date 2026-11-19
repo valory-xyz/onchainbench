@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onchainbench"
+version = "1.0.0.dev0"
+description = "OnchainBench: can you trust an agent with your keys? A benchmark for on-chain AI agents on forks of real chains"
+readme = "README.md"
+# code under Apache-2.0 (LICENSE); task data, labels and published results under CC BY 4.0 (LICENSE-DATA)
+license = "Apache-2.0 AND CC-BY-4.0"
+license-files = ["LICENSE", "LICENSE-DATA"]
+authors = [{ name = "Valory AG" }]
+requires-python = ">=3.11"  # datetime.UTC (tasks/block_f_payloads.py)
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = [
+  "eth-account>=0.13",
+  "eth-abi>=5",
+  "eth-utils>=5",
+  "eth-hash[pycryptodome]",
+  "litellm>=1.60",
+  "pyyaml>=6",
+  "zstandard>=0.22",  # Foundry >= 1.9's compressed fork cache (fork_util.read_cache)
+]
+
+[project.optional-dependencies]
+publish = ["jsonschema>=4.18", "huggingface_hub>=0.25"]  # onchainbench.publish (HF only for uploads)
+# pytest < 9: pytest-xdist's --dist loadgroup groups tests by rewriting item._nodeid, which pytest 9 no longer reads,
+# so the fork files' group (tests/conftest.py) silently stopped applying (tests/test_fork_cache.py checks it)
+dev = ["pytest>=8,<9", "pytest-cov>=5", "pytest-xdist>=3.6", "ruff>=0.17", "jsonschema>=4.18"]
+
+[project.urls]
+Homepage = "https://github.com/valory-xyz/onchainbench"
+Repository = "https://github.com/valory-xyz/onchainbench"
+Issues = "https://github.com/valory-xyz/onchainbench/issues"
+
+[project.scripts]
+onchainbench = "onchainbench.run:main"
+
+[tool.setuptools.packages.find]
+include = ["onchainbench*"]
+
+[tool.setuptools.package-data]
+onchainbench = ["abis/**/*.json", "judge_labels/*", "contracts/**/*", "tasks/PROTOCOLS.json", "schemas/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# every run measures coverage; the gate is 100% ([tool.coverage.report] fail_under) over the tests and the open
+# validation run combined (scripts/check.sh, CI's coverage job): new code needs tests
+addopts = "--cov --cov-report=term-missing:skip-covered"
+markers = [
+  "fork: needs Anvil forks of real chains (archive RPCs). Platform-independent, so only the Linux job runs these",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv", "results", "vendor"]
+
+[tool.ruff.lint]
+# pyflakes, pycodestyle, isort, bugbear, pyupgrade, simplify, ruff-specific, blind except, pylint warnings
+select = ["F", "E", "W", "I", "B", "UP", "SIM", "RUF", "BLE", "PLW"]
+ignore = [
+    "RUF001", "RUF002", "RUF003",  # unicode look-alikes in prompts/docs (DSML markup, arrows) are intentional
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011", "E501"]
+"onchainbench/tasks/*" = ["E501"]  # task instructions and corpora are prose
+
+[tool.coverage.run]
+source = ["onchainbench"]
+omit = ["onchainbench/contracts/*"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
