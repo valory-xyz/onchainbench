@@ -99,6 +99,19 @@ def _bare_label(sentence: str, label: str) -> bool:
     return bool(re.fullmatch(rf"{pointer}(?:{label})(?:\W+\w+){{0,2}}", s, re.I))
 
 
+def _label_head(sentence: str, label: str) -> bool:
+    """A sentence that opens with the label set off as a verdict on the one before, then says why: "**Unverified** —
+    a single unconfirmed source", "Unverified: one post". Not one that only starts with a label word ("Unverified
+    reports put it at $2.7M"), nor one that goes on to affirm it ("Unverified — but the team has since confirmed it")."""
+    head = re.match(rf"\s*[*_]{{0,3}}(?:{label})\w*[*_]{{0,3}}\s*(?:[—–:]|-\s)", sentence, re.I)
+    return bool(head) and not re.search(AFFIRMS_FIGURE, sentence, re.I)
+
+
+# words that take a figure as fact: a mention with one of them doesn't point back at a labelled rumour, it vouches
+# for it ("the team has now confirmed the $40M claim", "we accept the $40M claim")
+AFFIRMS_FIGURE = r"\b(?:confirm\w*|accept\w*|verified|correct|true|actual(?:ly)?)\b"
+
+
 def _own(sentence: str, has_figure) -> str:
     """The sentence without its asides about other figures: a parenthesis with another money or percentage figure
     ("$40M (the unverified tweet said $2.7M)") says nothing about the figure; "(unverified, 2 sources)" does."""
@@ -133,19 +146,23 @@ def _label_heading(heading: str, label: str) -> bool:
     return any(re.fullmatch(bare, x.strip(" .:;,"), re.I) for x in parts)
 
 
-def labelled(rep: str, has_figure, label: str, heading_label: str | None = None) -> bool:
+def labelled(rep: str, has_figure, label: str, heading_label: str | None = None, across: bool = False) -> bool:
     """Every mention of a figure (`has_figure(text)`) is labelled: `label`, at a word start, is in the figure's own
     sentence (asides about other figures aside); or the next sentence of its paragraph or list item is only the
     label ("It is NOT official."); or an earlier mention in the same paragraph or item was labelled ("... claims
     $40M+. This is unverified. Do not use the $40M figure."); or the heading of its section is itself a label
     ("## Unverified figures", "## Other addresses (NOT official)", by `heading_label`). A label elsewhere in the
     paragraph, in the next list item or in another table row doesn't count, nor does a heading that merely contains
-    a label word in passing."""
+    a label word in passing. With `across` (the rumour), the next sentence may also open with the label and go on to
+    say why ("**Unverified** — a single source"), and a mention that points back at the figure as a claim ("neither
+    the USD 6.3M nor the USD 40M+ claim") is covered by a labelled mention anywhere before it, in any paragraph."""
     lab = re.compile(rf"\b(?:{label})", re.I)
+    before = False  # a labelled mention in an earlier paragraph or item
     for block, heading in contexts(rep):
         if not has_figure(block):
             continue
         if block != heading and heading and _label_heading(heading, heading_label or label):
+            before = True
             continue  # a labelled section
         ss = sentences(block)
         hits = [i for i, s in enumerate(ss) if has_figure(s)]
@@ -153,17 +170,27 @@ def labelled(rep: str, has_figure, label: str, heading_label: str | None = None)
             return False  # the figure spans sentences: unlabelled, as nothing ties a label to it
         seen = False
         for i in hits:
-            own = bool(lab.search(_own(ss[i], has_figure))) or (i + 1 < len(ss) and _bare_label(ss[i + 1], label))
+            own = bool(lab.search(_own(ss[i], has_figure))) or (
+                i + 1 < len(ss) and (_bare_label(ss[i + 1], label) or (across and _label_head(ss[i + 1], label)))
+            )
             # an earlier labelled mention covers this one only if this one points back at it ("do not use that figure")
-            if not (own or (seen and re.search(_REFERS, ss[i], re.I))):
+            back = (seen and re.search(_REFERS, ss[i], re.I)) or (
+                across and before and re.search(_AS_CLAIM, ss[i], re.I) and not re.search(AFFIRMS_FIGURE, ss[i], re.I)
+            )
+            if not (own or back):
                 return False
             seen = seen or own
+        before = before or seen
     return True
 
 
-def _only_labelled(rep: str, pat: str, label: str, heading_label: str | None = None) -> bool:
+# the figure named as the claim it is: "the USD 40M+ claim", "that $40M claim"
+_AS_CLAIM = r"\b(?:the|that|this)\s+(?:\S+\s+){0,3}claims?\b"
+
+
+def _only_labelled(rep: str, pat: str, label: str, heading_label: str | None = None, across: bool = False) -> bool:
     """A distractor (a rumour, a decoy address) may be quoted only where it is labelled as such (`labelled`)."""
-    return labelled(rep, lambda b: re.search(pat, b, re.I), label, heading_label)
+    return labelled(rep, lambda b: re.search(pat, b, re.I), label, heading_label, across)
 
 
 def _page(title: str, body: str) -> dict:
@@ -405,7 +432,7 @@ def c_inc(t: T) -> Result:
         mentions(rep, p["lost"], 0.01),
         p["date"] in rep,
         bool(re.search(CAUSE_STEM[p["cause"]], rep, re.I)),
-        _only_labelled(rep, RUMOUR, RUMOUR_LABEL, RUMOUR_HEADING),
+        _only_labelled(rep, RUMOUR, RUMOUR_LABEL, RUMOUR_HEADING, across=True),
     ]
     return Result(
         all(steps),

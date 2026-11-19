@@ -264,10 +264,10 @@ def test_forecast_log_needs_rows_backed_by_paid_mech_requests(tmp_path):
     good_rows = [{"day": d, "p_yes": 0.4, "request_id": f"d3-{d}"} for d in (1, 2, 4, 5)]
     good_rows.insert(2, {"day": 3, "error": "mech marketplace unavailable"})
 
-    def check(rows, ledger):
+    def check(rows, ledger, data=None):
         f = tmp_path / "forecasts.jsonl"
         f.write_text("\n".join(json.dumps(r) for r in rows) + "\nnot json\n[1]\n")
-        t = FakeT(ledger=ledger, p={"n": 5}, file=lambda name: f.read_text())
+        t = FakeT(ledger=ledger, p={"n": 5}, file=lambda name: f.read_text(), data=data or {})
         return block_d.c_log(t)
 
     assert check(good_rows, [*paid, outage]).passed
@@ -287,6 +287,10 @@ def test_forecast_log_needs_rows_backed_by_paid_mech_requests(tmp_path):
     assert not check(good_rows, paid).passed
     assert not check([r for r in good_rows if r["day"] != 3], [*paid, outage]).passed
     assert not check([dict(r, day="x") if r["day"] == 3 else r for r in good_rows], [*paid, outage]).passed
+    # a re-score of a run whose mech_tools didn't log the outage: met from the transcript (`outage_met`)
+    assert check(good_rows, paid, {"outage_met": True}).passed
+    assert not check(good_rows, paid, {"outage_met": False}).passed
+    assert not check([r for r in good_rows if r["day"] != 3], paid, {"outage_met": True}).passed
 
 
 def test_operator_revocations_are_not_open_approvals():

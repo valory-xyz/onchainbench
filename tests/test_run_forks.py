@@ -196,8 +196,11 @@ def test_fork_connect_tools_refusals_and_integrity(gnosis):
         assert next(iter(out["delivery_results"].values()))["result"]["content"] == "got list"
         fc.s.faults.update(mech_outage=True)
         for tool, args in (("mech_tools", {}), ("mech_request", {"prompt": "q", "tool": "prediction-online"})):
+            before = len(fc.s.ledger)
             with pytest.raises(ConnectError, match="503"):
                 c.call_tool(tool, args)
+            # each mech call met during the outage is logged: an agent that reads mech_tools first meets it there
+            assert fc.s.ledger[before:] == [{"kind": "refusal", "rule": "mech-outage"}], tool
         fc.s.faults.update(mech_outage=False, signer_refuses=True)
         for tool, args in (
             ("safe_transaction", {"chain": "gnosis", "target": W}),

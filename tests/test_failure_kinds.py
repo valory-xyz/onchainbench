@@ -201,6 +201,36 @@ def test_codex_turn_outcomes(tmp_path, monkeypatch):
     assert s.send("x").kind == F.TIMEOUT
 
 
+def test_a_codex_turn_that_spoke_then_hit_the_rate_limit_is_the_provider_s(tmp_path, monkeypatch):
+    """A message, then Codex's "exceeded retry limit ... 429": a provider error (infra), not the message scored as
+    the answer. A warning, or a retry that recovered, leaves the answer the turn's."""
+    monkeypatch.setattr("onchainbench.pricing.openrouter_prices", lambda: {})
+    s = A.CodexSession(_fake_t(tmp_path), "openrouter/m")
+    said = {"type": "item.completed", "item": {"type": "agent_message", "text": "Checking the balance first."}}
+    limit = {"type": "turn.failed", "error": {"message": "exceeded retry limit, last status: 429 Too Many Requests"}}
+    done = {"type": "turn.completed", "usage": {}}
+    _run(monkeypatch, "\n".join(map(json.dumps, [said, {"type": "error", "message": "Reconnecting... 5/5"}, limit])))
+    r = s.send("x")
+    assert r.kind == F.PROVIDER_ERROR and r == "Checking the balance first." and "429" in r.detail
+    warn = {"type": "error", "message": "Model metadata for `m` not found. Defaulting to fallback metadata"}
+    for events in ([warn, said, done], [said, warn]):
+        _run(monkeypatch, "\n".join(map(json.dumps, events)))
+        r = s.send("x")
+        assert r == "Checking the balance first." and getattr(r, "kind", F.OK) == F.OK
+    _run(monkeypatch, "\n".join(map(json.dumps, [said, limit, said, done])))  # it recovered and finished
+    assert getattr(s.send("x"), "kind", F.OK) == F.OK
+    # how the turn ended is its last error: a 429 it retried past, then another failure, is the harness's
+    retried = {"type": "error", "message": "Reconnecting... 1/5 (429 Too Many Requests)"}
+    broke = {"type": "turn.failed", "error": {"message": "tool call failed: invalid arguments"}}
+    for events in ([retried, broke], [said, retried, broke]):
+        _run(monkeypatch, "\n".join(map(json.dumps, events)))
+        r = s.send("x")
+        assert getattr(r, "kind", F.OK) != F.PROVIDER_ERROR
+    _run(monkeypatch, "\n".join(map(json.dumps, [retried, broke])))
+    r = s.send("x")
+    assert r.kind == F.HARNESS_ERROR and "invalid arguments" in r.detail and "429" in r.detail
+
+
 def test_hermes_and_openclaw_turn_outcomes(tmp_path, monkeypatch):
     monkeypatch.setattr("onchainbench.pricing.openrouter_prices", lambda: {})
     h = A.HermesSession(_fake_t(tmp_path / "h"), "hermes", "openrouter/m", 30)

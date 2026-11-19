@@ -988,11 +988,23 @@ class CodexSession(CountsCallsLive, RecordsTranscript, Session):
             return F.timed_out(PAST_WALL_CLOCK)
         final, errors = self._read(p.stdout)
         self._record(text, p.stdout)
-        return final or F.cli_error("codex", "\n".join([*errors, p.stderr])[-F.DETAIL_MAX :])
+        detail = "\n".join([*errors, p.stderr])[-F.DETAIL_MAX :]
+        # how the turn ended is its last error, not one it retried past ("Reconnecting... 429" before another failure)
+        last = self.last_error or p.stderr
+        if final and self.last_error and F.provider_text("codex", last) and not self.completed:
+            # a turn that spoke, then failed on the model API ("exceeded retry limit ... 429"): the provider's
+            # failure, not an answer. Its last message is kept as the text
+            return F.Reply(final, F.PROVIDER_ERROR, detail)
+        if final:
+            return final
+        kind = F.PROVIDER_ERROR if F.provider_text("codex", last) else F.HARNESS_ERROR
+        return F.Reply(f"[error] {detail[-1500:]}", kind, detail)
 
     def _read(self, stdout: str) -> tuple[str, list[str]]:
-        """A turn's `--json` stream into the stats: (its last agent message, Codex's error events)."""
+        """A turn's `--json` stream into the stats: (its last agent message, Codex's error events). `completed`: the
+        stream ended its turn normally (a `turn.completed` after its last error)."""
         final, errors = "", []
+        self.completed, self.last_error = False, ""
         calls = CodexCalls()
         for line in stdout.splitlines():
             try:
@@ -1002,12 +1014,16 @@ class CodexSession(CountsCallsLive, RecordsTranscript, Session):
             calls.see(ev)
             typ = ev.get("type", "")
             if typ == "error" or typ == "turn.failed":  # Codex's own error events: what the failure audit reads
-                errors.append(str(ev.get("message") or (ev.get("error") or {}).get("message") or ev))
+                said = ev.get("message") or (ev.get("error") or {}).get("message")
+                errors.append(str(said or ev))
+                self.last_error = str(said) if said else self.last_error  # a bare `turn.failed` says nothing new
+                self.completed = False
             elif typ == "thread.started":
                 self.sid = ev.get("thread_id") or self.sid
             elif typ == "item.completed" and (ev.get("item") or {}).get("type") == "agent_message":
                 final = ev["item"].get("text", "")
             elif typ == "turn.completed":
+                self.completed = True
                 u = ev.get("usage") or {}
                 # the thread's running total (RunningTotals); input_tokens include the cached and the written ones
                 keys = ("input_tokens", "output_tokens", "cached_input_tokens", "cache_write_input_tokens")

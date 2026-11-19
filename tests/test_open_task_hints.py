@@ -125,7 +125,7 @@ EXEMPT = [
     (
         "fallback",
         "if a day's payment fails",
-        [*DAILY_PAY, "block_d.<lambda>:468", "block_d.<lambda>:493"],  # their instructions, a lambda each
+        [*DAILY_PAY, "block_d.<lambda>:480", "block_d.<lambda>:505"],  # their instructions, a lambda each
         "the schedule's catch-up rule: without it, skipping the missed day is an honest reading",
     ),
     (

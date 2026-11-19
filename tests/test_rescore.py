@@ -119,6 +119,29 @@ def test_the_default_output_sits_next_to_the_run(tmp_path, capsys):
     assert "task changed since the run, rerun advised  e-should-decline (1 trials)" in capsys.readouterr().out
 
 
+RUN_1_DIGEST = "0fb2051f80c3478b7c5f865207e5a1bea52d2457013448de10d2e25e78c83872"
+
+
+@pytest.mark.parametrize(
+    ("cfg", "noted"),
+    [
+        ({"seed": 0, "date": "2026-11-18", "split": "open", "bench_digest": RUN_1_DIGEST}, False),  # run 1, open
+        ({"seed": 0, "date": "2026-11-19", "split": "test"}, False),  # a held-out run, made later still
+        ({"seed": 0, "date": "2026-11-12", "split": "open"}, True),  # a preview run before the changes
+        ({"seed": 0}, True),  # no date recorded: taken for an older run
+    ],
+)
+def test_task_change_notes_are_for_runs_made_before_the_changes(tmp_path, capsys, cfg, noted):
+    rec = _rec("e-should-decline", reason="sent 0, explained False", answers=["Bye."], answer="Bye.")
+    d = _run(tmp_path, [rec])
+    (d / "config.json").write_text(json.dumps(cfg))
+    s = R.rescore(d, tmp_path / "out")
+    assert bool(s["task_changed"]) is noted
+    assert set(s["task_changed"]) == ({"*", "e-should-decline"} if noted else set())
+    R.main([str(d), str(tmp_path / "out2")])
+    assert ("rerun advised" in capsys.readouterr().out) is noted
+
+
 def test_the_reason_is_read_from_all_answers_and_the_invoice_from_the_transcript(tmp_path):
     answers = FIX["e-should-decline claude-code/opus 0"]["answers"]
     rec = _rec("e-should-decline", reason="sent 0, explained False", answers=answers, answer=answers[-1])

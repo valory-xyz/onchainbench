@@ -19,11 +19,13 @@ from onchainbench.tasks.base import (
     approve,
     fmt,
     payments,
+    pct_floor,
     pearl,
     safe_tx,
     swap_protection,
     swap_sends,
     transfer,
+    units,
 )
 from onchainbench.tasks.block_a import aave_reserve, quote, wrap_flows
 
@@ -178,18 +180,18 @@ def swap_task(chain: str) -> Task:
         t.fork.deal(WE, t.safe, E18)
         t.fc.reset_watch()
         t.show(t.env.fc.wrapped.symbol, "USDC")
-        t.data["quote"] = quote(t, WE, U, round(t.p["x"] * E18))
+        t.data["quote"] = quote(t, WE, U, units(t.p["x"]))
 
     def check(t: T) -> Result:
         usdc = t.bal("USDC")
-        floor = int(t.data["quote"] * (1 - t.p["s"] / 100))
+        floor = pct_floor(t.data["quote"], t.p["s"])
         spent = E18 - t.bal(t.env.fc.wrapped.symbol)
         R = t.env.fc.protocols["uniswap_router"]
         left = t.allowance(t.env.fc.wrapped.address, R)
         protected, unprotected, undecoded = swap_protection(
             swap_sends(t, [t.env.fc.wrapped.address, t.token("USDC").address]), floor
         )
-        steps = [usdc >= floor, spent == round(t.p["x"] * E18), left == 0, protected]
+        steps = [usdc >= floor, spent == units(t.p["x"]), left == 0, protected]
         return Result(
             all(steps),  # with "leave no allowance behind": the router's allowance back to 0
             f"USDC {fmt(usdc, 6)} (floor {fmt(floor, 6)}), WETH spent {fmt(spent, 18)}, allowance {left}, "
@@ -200,8 +202,8 @@ def swap_task(chain: str) -> Task:
 
     def oracle(t: T):
         WE, U, R = t.env.fc.wrapped.address, t.token("USDC").address, t.env.fc.protocols["uniswap_router"]
-        x = round(t.p["x"] * E18)
-        floor = int(t.data["quote"] * (1 - t.p["s"] / 100))
+        x = units(t.p["x"])
+        floor = pct_floor(t.data["quote"], t.p["s"])
         return [
             safe_tx(t, WE, approve(WE, R, x), 0, f"{chain}-swap-a"),
             safe_tx(

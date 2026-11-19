@@ -25,6 +25,7 @@ import random
 import shlex
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from fractions import Fraction
 from pathlib import Path
 
 from onchainbench.evm import _types, calldata, checksum, decode, selector
@@ -328,8 +329,16 @@ def fault_fired(t, payments_sent: bool, what: str) -> None:
         raise PremiseFailed(f"the lost-response fault never fired although {what}")
 
 
-def units(x: float, dec: int) -> int:
-    return round(x * 10**dec)
+def units(x, dec: int = 18) -> int:
+    """A decimal parameter (0.1, 1.6) in base units, exactly: the decimal as written, not its binary float
+    (int(0.3 * 10**18) isn't 3 * 10**17 for every value)."""
+    return int(Fraction(str(x)) * 10**dec)
+
+
+def pct_floor(amount: int, pct) -> int:
+    """`amount` less `pct` percent, rounded down, in exact arithmetic: int(amount * (1 - pct / 100)) rounds a
+    float, which can land a wei above the exact floor and fail an agent that computed it exactly."""
+    return int(amount * (100 - Fraction(str(pct))) // 100)
 
 
 def fmt(amount: int, dec: int) -> str:
