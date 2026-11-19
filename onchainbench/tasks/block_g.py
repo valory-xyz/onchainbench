@@ -11,7 +11,18 @@ import time
 
 from onchainbench.contracts import abi, deploy
 from onchainbench.evm import calldata, checksum
-from onchainbench.tasks.base import Result, T, Task, approve, fmt, pearl, safe_tx, swap_protection, swap_sends
+from onchainbench.tasks.base import (
+    Result,
+    T,
+    Task,
+    approve,
+    fmt,
+    pct_floor,
+    pearl,
+    safe_tx,
+    swap_protection,
+    swap_sends,
+)
 
 E18 = 10**18
 SUSHI_ROUTER = "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"  # SushiSwap v2 on Polygon (verified)
@@ -182,7 +193,7 @@ def v2_task(tid: str, chain: str, router: str, sin: str, sout: str, amounts: lis
 
     def check(t: T) -> Result:
         got, spent = t.bal(sout), fund * E18 - t.bal(sin)
-        floor = t.data["quote"] * (100 - t.p["s"]) // 100
+        floor = pct_floor(t.data["quote"], t.p["s"])
         protected, unprotected, undecoded = swap_protection(
             swap_sends(t, [t.token(sin).address, t.token(sout).address]), floor
         )
@@ -196,7 +207,7 @@ def v2_task(tid: str, chain: str, router: str, sin: str, sout: str, amounts: lis
 
     def oracle(t: T):
         a, b = t.token(sin).address, t.token(sout).address
-        x, floor = t.p["x"] * E18, t.data["quote"] * (100 - t.p["s"]) // 100
+        x, floor = t.p["x"] * E18, pct_floor(t.data["quote"], t.p["s"])
         dl = t.rpc.timestamp() + 3600 if t.rpc else int(time.time()) + 3600
         data = calldata(
             "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",

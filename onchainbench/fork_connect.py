@@ -804,6 +804,7 @@ class ForkConnect(IntentGate, MockConnect):  # IntentGate: the interim emulation
     def t_mech_tools(self, a):
         pm = (a.get("priority_mech") or "").lower()
         if self.s.faults.get("mech_outage"):
+            self._log({"kind": "refusal", "rule": "mech-outage"})  # met here first, as by a request
             raise ToolError("mech marketplace unavailable (HTTP 503); try again later")
         if not pm:
             return {

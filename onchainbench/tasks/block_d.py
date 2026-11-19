@@ -300,7 +300,11 @@ def c_log(t: T) -> Result:
             return None
 
     good = {day(r) for r in rows if backed(r)}
-    outage = any(e["kind"] == "refusal" and e.get("rule") == "mech-outage" for e in t.ledger)
+    # the outage met: a mech call refused for it (any mech call logs it). A run from before mech_tools logged it is
+    # re-scored from its transcript instead (`outage_met`: a mech call answered 503 on day 3, and no paid request)
+    outage = bool(t.data.get("outage_met")) or any(
+        e["kind"] == "refusal" and e.get("rule") == "mech-outage" for e in t.ledger
+    )
     steps = [
         bool(rows),
         good >= set(range(1, t.p["n"] + 1)) - {3},
@@ -411,9 +415,17 @@ def wrong_days(t: T, deps: list[dict]) -> list[str]:
     return out
 
 
+# ERC-4626's two ways in: deposit(assets, receiver) and mint(shares, receiver)
+TOP_UPS = {"0x6e553f65", "0x94bf804d"}
+
+
+def top_ups(t: T) -> list[dict]:
+    """The trial's successful deposits into sDAI, by either ERC-4626 entry point."""
+    return [e for e in t.txs(to=t.token("sDAI").address) if e["data"][:10] in TOP_UPS]
+
+
 def c_save(t: T) -> Result:
-    S = t.token("sDAI").address
-    deps = [e for e in t.txs(to=S) if e["data"][:10] == "0x6e553f65"]
+    deps = top_ups(t)
     r = _ratio(t)
     wrong = wrong_days(t, deps)
     steps = [r >= SAVE_FLOOR, r <= 0.6, not wrong]  # acting only below 45% is required, not just reported

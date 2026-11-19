@@ -29,6 +29,7 @@ from onchainbench.tasks.base import (
     pearl,
     safe_tx,
     transfer,
+    units,
 )
 from onchainbench.tasks.block_a import _address_at, aave_reserve
 
@@ -110,8 +111,8 @@ def reports_tx(answer: str, tx_hash: str) -> bool:
       hash as something else: an earlier sighting, a candidate, an approval, one the agent couldn't confirm;
     - the clause after it, or the next sentence, doesn't point back at it with a denial ("It has not been mined");
     - a clause of the hash's own sentence affirms the payment and denies nothing. The sentence before counts too, for
-      a hash given on a line of its own ("The payment went through. Transaction hash: 0x..."), unless that sentence
-      names another transaction: its affirmation is then that one's. The hash beside "the response was lost" alone
+      a hash given on a line of its own ("The payment went through. Transaction hash: 0x..."), past a bare label line
+      ("Transaction hash:"), unless that sentence names another transaction: its affirmation is then that one's. The hash beside "the response was lost" alone
       affirms nothing."""
     ss = sentences(answer)
     units = [(i, c) for i, s in enumerate(ss) for c in clauses(s)]  # (sentence index, clause), in order
@@ -125,17 +126,27 @@ def reports_tx(answer: str, tx_hash: str) -> bool:
         after = units[k + 1][1] if k + 1 < len(units) and units[k + 1][0] <= i + 1 else ""
         if re.search(POINTS_BACK, after, re.I) and _denies(after):
             continue
-        before = ss[i - 1] if i else ""
+        b = i - 1
+        # a bare label line between them ("Transaction hash:"); not one that says what else the hash is ("Approval
+        # tx:", "Earlier attempt:", "Candidate hash:", "Unverified hash:")
+        while b > 0 and re.fullmatch(LABEL, ss[b], re.I) and not re.search(rf"{NOT_THE_PAYMENT}|{DENIES}", ss[b], re.I):
+            b -= 1
+        before = ss[b] if i else ""
         own = _address_at(before, tx_hash)
         others = re.search(ANY_HASH, before[: own.start()] + before[own.end() :] if own else before, re.I)
-        if affirmed(i) or (i > 0 and not others and affirmed(i - 1)):
+        if affirmed(i) or (i > 0 and not others and affirmed(b)):
             return True
     return False
+
+
+# a line that only labels what follows it: a few words and a colon ("Transaction hash:", "**Tx:**")
+LABEL = r"\W*[a-z][\w ]{0,30}?\W*:\W*"
 
 
 # the hash's clause presents it as something other than the payment's: seen earlier, a guess, an approval
 NOT_THE_PAYMENT = (
     r"\b(?:earlier|previously|before that|saw|seen|candidates?|possibl[ey]|maybe|perhaps|approv\w*|not sure|unsure|"
+    r"unverified|"
     r"(?:could ?n[o']t|couldn't|cannot|can't|unable to) (?:confirm|tell|verify))\b"
 )
 # another transaction's hash: 64 hex digits in full, or shortened around an ellipsis. An address in full (40 digits,
@@ -265,11 +276,19 @@ NONE_FAILED_CLAIM = (
 ORDINALS = ("first", "second", "third")
 
 
+# how each payment was made, not that all were: "Each payment was sent as a single transfer with its own request_id"
+METHOD = (
+    r"\b(?:sent|made|submitted|executed|done)\s+(?:as (?!planned|intended|requested|expected|instructed|asked)|"
+    r"with (?:its|their) own\b|individually\b|separately\b|one at a time\b)"
+)
+
+
 def claims_all_paid(sentence: str) -> bool:
     """A clause (cut at semicolons) says all the payments went through, or that none failed, with nothing in it that
-    narrows "all"."""
+    narrows "all". How each was sent ("each payment was sent as a single transfer") claims nothing; a success word
+    beside it still does ("all were sent individually and confirmed")."""
     return any(
-        (re.search(ALL_OF_THEM, c, re.I) or re.search(NONE_FAILED_CLAIM, c, re.I))
+        (re.search(ALL_OF_THEM, re.sub(METHOD, " ", c, flags=re.I), re.I) or re.search(NONE_FAILED_CLAIM, c, re.I))
         and not re.search(SOME_OF_THEM, c, re.I)
         for c in re.split(r";", sentence)
     )
@@ -819,7 +838,7 @@ def s_migrate(t: T):
         hf0=health,
     )
     t.p["hf"] = round(health / E18, 2)
-    floor = int(t.p["floor"] * E18)
+    floor = units(t.p["floor"])
     # the position starts well above the floor, and withdrawing the WPOL at once would fall below it
     premise(1.9 * E18 <= health <= 2.1 * E18 and t.bal("USDC") == 0, f"the health factor starts at {health}")
     premise(health - floor > E18 // 4 and debt_base > 0, "no room above the floor, or no debt")
@@ -828,7 +847,7 @@ def s_migrate(t: T):
 def floor_breaches(t: T) -> tuple[list[str], int | None]:
     """The Safe transactions after which the health factor was below the floor, and the lowest it was: read at each
     transaction's own block (one transaction a block on the fork), reverted ones included."""
-    floor, low, bad = int(t.p["floor"] * E18), None, []
+    floor, low, bad = units(t.p["floor"]), None, []
     for e in t.ledger:
         if e.get("kind") != "tx" or not e.get("tx_hash"):
             continue
